@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect, useCallback } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+/* eslint-disable react-hooks/immutability */
 import { useTexture } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useCallback, useEffect, useRef } from "react";
 import * as THREE from "three";
 import "./App.css";
 
@@ -19,8 +20,8 @@ const IMAGES = [
 const CARD_W = 2.1;
 const CARD_H = 2.8;
 const SNAP_SPEED = 5.0;
-const SCROLL_SENSITIVITY = 0.0008;
-const TOUCH_SENSITIVITY = 0.006;
+const SCROLL_SENSITIVITY = 0.0007;
+const TOUCH_SENSITIVITY = 0.0025;
 
 // Responsive config based on viewport
 function getConfig() {
@@ -86,22 +87,6 @@ function ImageCard({ url, index, total, getDisplayAngle }) {
   );
 }
 
-function RingDecor({ getDisplayAngle, getRadius }) {
-  const ref = useRef();
-  useFrame(() => {
-    if (ref.current) ref.current.rotation.z = getDisplayAngle() * 0.04;
-  });
-  const r = getRadius();
-  return (
-    <group rotation={[Math.PI / 2, 0, 0]}>
-      <mesh ref={ref}>
-        <torusGeometry args={[r, 0.007, 6, 128]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.07} />
-      </mesh>
-    </group>
-  );
-}
-
 function Scene({ scrollAngle }) {
   const { camera } = useThree();
   const displayAngle = useRef(0);
@@ -132,11 +117,9 @@ function Scene({ scrollAngle }) {
   });
 
   const getDisplayAngle = useCallback(() => displayAngle.current, []);
-  const getRadius = useCallback(() => configRef.current.radius, []);
 
   return (
     <group>
-      <RingDecor getDisplayAngle={getDisplayAngle} getRadius={getRadius} />
       {IMAGES.map((img, i) => (
         <ImageCard
           key={img.url}
@@ -147,45 +130,6 @@ function Scene({ scrollAngle }) {
         />
       ))}
     </group>
-  );
-}
-
-function HUD({ scrollAngle, onDotClick }) {
-  const [state, setState] = useState({ label: IMAGES[0].label, index: 0 });
-  const total = IMAGES.length;
-
-  useEffect(() => {
-    const step = (Math.PI * 2) / total;
-    const interval = setInterval(() => {
-      const angle =
-        ((scrollAngle.current % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-      const i = Math.round(angle / step) % total;
-      setState((prev) =>
-        prev.index === i ? prev : { label: IMAGES[i].label, index: i },
-      );
-    }, 40);
-    return () => clearInterval(interval);
-  }, [scrollAngle, total]);
-
-  const isMobile = window.innerWidth < 600;
-
-  return (
-    <div className="hud">
-      <div className="hud-label">{state.label}</div>
-      <div className="dots">
-        {IMAGES.map((_, i) => (
-          <button
-            key={i}
-            className={`dot${i === state.index ? " active" : ""}`}
-            onClick={() => onDotClick(i)}
-            aria-label={IMAGES[i].label}
-          />
-        ))}
-      </div>
-      <div className="hud-hint">
-        {isMobile ? "swipe to rotate" : "↕ scroll to rotate"}
-      </div>
-    </div>
   );
 }
 
@@ -219,18 +163,18 @@ export default function App() {
 
   // Touch
   const handleTouchStart = useCallback((e) => {
-    touchStartY.current = e.touches[0].clientY;
-    touchLastY.current = e.touches[0].clientY;
+    touchStartY.current = e.touches[0].clientX;
+    touchLastY.current = e.touches[0].clientX;
     velocity.current = 0;
   }, []);
 
   const handleTouchMove = useCallback(
     (e) => {
       e.preventDefault();
-      const y = e.touches[0].clientY;
-      const dy = touchLastY.current - y;
-      touchLastY.current = y;
-      velocity.current += dy * TOUCH_SENSITIVITY;
+      const x = e.touches[0].clientX;
+      const dx = touchLastY.current - x;
+      touchLastY.current = x;
+      velocity.current += dx * TOUCH_SENSITIVITY;
       startScrolling();
     },
     [startScrolling],
@@ -271,28 +215,8 @@ export default function App() {
     return () => cancelAnimationFrame(raf);
   }, [step]);
 
-  // Click dot to jump
-  const handleDotClick = useCallback(
-    (i) => {
-      const current = scrollAngle.current;
-      const target = i * step;
-      // Find shortest path
-      let diff =
-        target - (((current % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2));
-      if (diff > Math.PI) diff -= Math.PI * 2;
-      if (diff < -Math.PI) diff += Math.PI * 2;
-      velocity.current = 0;
-      scrollAngle.current = current + diff;
-    },
-    [step],
-  );
-
   return (
     <div className="app">
-      <div className="title-bar">
-        <span className="title-text">GALLERY</span>
-        <span className="title-count">{total} images</span>
-      </div>
       <Canvas
         gl={{ antialias: true, alpha: true }}
         dpr={[1, Math.min(window.devicePixelRatio, 2)]}
@@ -300,7 +224,7 @@ export default function App() {
       >
         <Scene scrollAngle={scrollAngle} />
       </Canvas>
-      <HUD scrollAngle={scrollAngle} onDotClick={handleDotClick} />
+      {/* <HUD scrollAngle={scrollAngle} onDotClick={handleDotClick} /> */}
     </div>
   );
 }
