@@ -1,11 +1,17 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 body {
-  background: #080a0f;
+  background: #1a1208;
   overflow: hidden;
   width: 100vw;
   height: 100dvh;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
   user-select: none;
@@ -15,17 +21,16 @@ body {
   position: relative;
   width: 100vw;
   height: 100dvh;
-  background: radial-gradient(ellipse at 50% 40%, #0d1520 0%, #060810 60%, #020305 100%);
+  background-image: url("https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=1920&q=85");
+  background-size: cover;
+  background-position: center;
   overflow: hidden;
 }
 
 .app::before {
-  content: '';
+  content: none;
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(20, 60, 120, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(60, 20, 100, 0.06) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
@@ -67,7 +72,11 @@ body {
   gap: clamp(0.8rem, 2.5vw, 1.2rem);
   padding: 2rem clamp(1rem, 5vw, 2rem) clamp(1.5rem, 5vh, 2.5rem);
   z-index: 10;
-  background: linear-gradient(to top, rgba(6, 8, 16, 0.75) 0%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    rgba(6, 8, 16, 0.75) 0%,
+    transparent 100%
+  );
 }
 
 .hud-label {
@@ -98,13 +107,15 @@ body {
   border: none;
   padding: 0;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.3s ease;
+  transition:
+    background 0.3s ease,
+    transform 0.3s ease;
   /* Larger tap target on mobile */
   position: relative;
 }
 
 .dot::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -8px;
 }
@@ -128,7 +139,10 @@ body {
 /* Safe area for notch phones */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .hud {
-    padding-bottom: max(clamp(1.5rem, 5vh, 2.5rem), env(safe-area-inset-bottom));
+    padding-bottom: max(
+      clamp(1.5rem, 5vh, 2.5rem),
+      env(safe-area-inset-bottom)
+    );
   }
   .title-bar {
     padding-top: max(clamp(1.2rem, 4vw, 2rem), env(safe-area-inset-top));
