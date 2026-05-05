@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/immutability */
-import { ContactShadows, RoundedBox, useTexture } from "@react-three/drei";
+import { ContactShadows, useTexture } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import "./App.css";
 
@@ -43,8 +43,7 @@ const IMAGES = [
 // 3:4 ratio card
 const CARD_W = 2.1;
 const CARD_H = 2.8;
-const CARD_DEPTH = 0.055; // ATM-card thickness in world units
-const CARD_RADIUS = 0.026; // must be < CARD_DEPTH/2 to avoid RoundedBox artifacts
+const CARD_RADIUS = 0.15;
 const SNAP_SPEED = 4.0;
 const SCROLL_SENSITIVITY = 0.0003;
 const TOUCH_SENSITIVITY = 0.0025;
@@ -68,18 +67,50 @@ function getConfig() {
   };
 }
 
-function ImageCard({
-  url,
-  index,
-  total,
-  step,
-  getDisplayAngle,
-  getCenterTilt,
-}) {
+function Card({ url, index, total, step, getDisplayAngle, getCenterTilt }) {
   const meshRef = useRef();
   const texture = useTexture(url);
   const baseAngle = (index / Math.max(total - 1, 1)) * ARC_SPAN;
   const configRef = useRef(getConfig());
+
+  // ✅ สร้าง geometry ครั้งเดียวพอ
+  const geometry = useMemo(() => {
+    const shape = new THREE.Shape();
+    const r = CARD_RADIUS;
+    const w = CARD_W;
+    const h = CARD_H;
+
+    shape.moveTo(-w / 2 + r, -h / 2);
+    shape.lineTo(w / 2 - r, -h / 2);
+    shape.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+    shape.lineTo(w / 2, h / 2 - r);
+    shape.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+    shape.lineTo(-w / 2 + r, h / 2);
+    shape.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
+    shape.lineTo(-w / 2, -h / 2 + r);
+    shape.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
+
+    const geo = new THREE.ShapeGeometry(shape);
+
+    // ✅ ทำ UV แค่ครั้งเดียว
+    geo.computeBoundingBox();
+    const box = geo.boundingBox;
+    const size = new THREE.Vector2(
+      box.max.x - box.min.x,
+      box.max.y - box.min.y,
+    );
+
+    const uv = geo.attributes.uv;
+
+    for (let i = 0; i < uv.count; i++) {
+      const x = geo.attributes.position.getX(i);
+      const y = geo.attributes.position.getY(i);
+
+      uv.setXY(i, (x - box.min.x) / size.x, (y - box.min.y) / size.y);
+    }
+
+    return geo;
+  }, []);
 
   useEffect(() => {
     const onResize = () => {
@@ -93,11 +124,11 @@ function ImageCard({
     if (!texture) return;
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 16;
-    texture.needsUpdate = true;
   }, [texture]);
 
   useFrame(() => {
     if (!meshRef.current) return;
+
     const { radius } = configRef.current;
     const displayAngle = getDisplayAngle();
     const angle = baseAngle - displayAngle;
@@ -109,45 +140,26 @@ function ImageCard({
     const t = Math.min(dist / (ARC_SPAN * 0.7), 1);
 
     const scale = Math.max(0.7, 1 - t * 0.3);
+
     const sideTilt = THREE.MathUtils.clamp(
       -angle * SIDE_TILT_FACTOR,
       -MAX_SIDE_TILT,
       MAX_SIDE_TILT,
     );
+
     const centerWeight = Math.max(0, 1 - dist / (step * 0.95));
     const centerTilt = getCenterTilt();
-    const tiltX = centerTilt.x * centerWeight;
-    const tiltY = centerTilt.y * centerWeight;
 
     meshRef.current.position.set(x, 0, z);
-    meshRef.current.rotation.x = tiltX;
-    meshRef.current.rotation.y = sideTilt + tiltY;
+    meshRef.current.rotation.x = centerTilt.x * centerWeight;
+    meshRef.current.rotation.y = sideTilt + centerTilt.y * centerWeight;
     meshRef.current.scale.setScalar(scale);
   });
 
   return (
     <group ref={meshRef}>
-      <RoundedBox
-        args={[CARD_W, CARD_H, CARD_DEPTH]}
-        radius={CARD_RADIUS}
-        smoothness={6}
-        castShadow
-        receiveShadow
-      >
-        <meshStandardMaterial
-          color="#f3f1ec"
-          roughness={0.82}
-          metalness={0.02}
-          side={THREE.DoubleSide}
-        />
-      </RoundedBox>
-
-      <mesh
-        position={[0, 0, CARD_DEPTH * 0.5 + 0.001]}
-        castShadow
-        receiveShadow
-      >
-        <planeGeometry args={[CARD_W - 0.055, CARD_H - 0.055]} />
+      <mesh geometry={geometry} castShadow receiveShadow>
+        {/* ❌ ลบ planeGeometry ทิ้ง */}
         <meshPhysicalMaterial
           map={texture}
           roughness={0.18}
@@ -256,7 +268,7 @@ function Scene({ scrollAngle }) {
       <directionalLight position={[-7, 4, -6]} intensity={0.55} />
 
       {IMAGES.map((img, i) => (
-        <ImageCard
+        <Card
           key={img.url}
           url={img.url}
           index={i}
