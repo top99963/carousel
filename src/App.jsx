@@ -6,38 +6,14 @@ import * as THREE from "three";
 import "./App.css";
 
 const IMAGES = [
-  {
-    url: "https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=900&h=1200&q=80",
-    label: "Living Room",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&h=1200&q=80",
-    label: "Kitchen",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&h=1200&q=80",
-    label: "Bedroom",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=900&h=1200&q=80",
-    label: "Hallway",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&h=1200&q=80",
-    label: "Office",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1505692952047-1a78307da8f2?auto=format&fit=crop&w=900&h=1200&q=80",
-    label: "Dining Room",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&h=1200&q=80",
-    label: "Modern Loft",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&h=1200&q=80",
-    label: "Studio",
-  },
+  { url: "https://picsum.photos/seed/arch1/600/800", label: "Architecture" },
+  { url: "https://picsum.photos/seed/nature2/600/800", label: "Nature" },
+  { url: "https://picsum.photos/seed/city3/600/800", label: "City" },
+  { url: "https://picsum.photos/seed/ocean4/600/800", label: "Ocean" },
+  { url: "https://picsum.photos/seed/forest5/600/800", label: "Forest" },
+  { url: "https://picsum.photos/seed/desert6/600/800", label: "Desert" },
+  { url: "https://picsum.photos/seed/mountain7/600/800", label: "Mountain" },
+  { url: "https://picsum.photos/seed/abstract8/600/800", label: "Abstract" },
 ];
 
 // 3:4 ratio card
