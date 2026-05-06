@@ -7,8 +7,7 @@
 }
 
 body {
-  background: #1a1208;
-  overflow: hidden;
+  background: black;
   width: 100vw;
   height: 100dvh;
   font-family: "Courier New", monospace;
@@ -21,10 +20,6 @@ body {
   position: relative;
   width: 100vw;
   height: 100dvh;
-  background-image: url("https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=1920&q=85");
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
 }
 
 .app::before {

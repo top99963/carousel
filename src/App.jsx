@@ -46,9 +46,9 @@ const CARD_H = 2.8;
 const CARD_RADIUS = 0.15;
 const SNAP_SPEED = 4.0;
 const SCROLL_SENSITIVITY = 0.0003;
-const TOUCH_SENSITIVITY = 0.0025;
+const TOUCH_SENSITIVITY = 0.0015;
 const ARC_SPAN = Math.PI;
-const SIDE_TILT_FACTOR = 1.45;
+const SIDE_TILT_FACTOR = 2;
 const MAX_SIDE_TILT = 1.1;
 const CENTER_TILT_MAX_X = 0.18;
 const CENTER_TILT_MAX_Y = 0.24;
@@ -60,9 +60,9 @@ function getConfig() {
   const isMobile = w < 600;
   const isTablet = w < 900;
   return {
-    radius: isMobile ? 3.2 : isTablet ? 3.8 : 4.5,
+    radius: 4.1,
     fov: isMobile ? 70 : isTablet ? 60 : 52,
-    camY: isMobile ? 0.5 : 0.8,
+    camY: 0,
     camZ: isMobile ? 7.5 : isTablet ? 8.5 : 9.5,
   };
 }
@@ -130,6 +130,7 @@ function Card({ url, index, total, step, getDisplayAngle, getCenterTilt }) {
     if (!meshRef.current) return;
 
     const { radius } = configRef.current;
+    // const radius = 4.5;
     const displayAngle = getDisplayAngle();
     const angle = baseAngle - displayAngle;
 
@@ -159,7 +160,6 @@ function Card({ url, index, total, step, getDisplayAngle, getCenterTilt }) {
   return (
     <group ref={meshRef}>
       <mesh geometry={geometry} castShadow receiveShadow>
-        {/* ❌ ลบ planeGeometry ทิ้ง */}
         <meshPhysicalMaterial
           map={texture}
           roughness={0.18}
@@ -225,6 +225,7 @@ function Scene({ scrollAngle }) {
 
   useEffect(() => {
     const onPointerMove = (e) => {
+      if (e.pointerType === "touch") return; // disable tilt on mobile
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
       const ny = (e.clientY / window.innerHeight) * 2 - 1;
       mouseTarget.current.x = THREE.MathUtils.clamp(
@@ -395,7 +396,6 @@ export default function App() {
       >
         <Scene scrollAngle={scrollAngle} />
       </Canvas>
-      {/* <HUD scrollAngle={scrollAngle} onDotClick={handleDotClick} /> */}
     </div>
   );
 }
