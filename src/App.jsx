@@ -14,22 +14,23 @@ const IMAGES = [
   { url: "https://picsum.photos/seed/desert6/600/800", label: "Desert" },
   { url: "https://picsum.photos/seed/mountain7/600/800", label: "Mountain" },
   { url: "https://picsum.photos/seed/abstract8/600/800", label: "Abstract" },
-  { url: "https://picsum.photos/seed/arch1/600/800", label: "Architecture" },
-  { url: "https://picsum.photos/seed/nature2/600/800", label: "Nature" },
-  { url: "https://picsum.photos/seed/city3/600/800", label: "City" },
-  { url: "https://picsum.photos/seed/ocean4/600/800", label: "Ocean" },
-  { url: "https://picsum.photos/seed/forest5/600/800", label: "Forest" },
-  { url: "https://picsum.photos/seed/desert6/600/800", label: "Desert" },
-  { url: "https://picsum.photos/seed/mountain7/600/800", label: "Mountain" },
-  { url: "https://picsum.photos/seed/abstract8/600/800", label: "Abstract" },
+  { url: "https://picsum.photos/seed/arch1/600/800", label: "A" },
+  { url: "https://picsum.photos/seed/nature2/600/800", label: "B" },
+  { url: "https://picsum.photos/seed/city3/600/800", label: "C" },
+  { url: "https://picsum.photos/seed/ocean4/600/800", label: "D" },
+  { url: "https://picsum.photos/seed/forest5/600/800", label: "E" },
+  { url: "https://picsum.photos/seed/desert6/600/800", label: "F" },
+  { url: "https://picsum.photos/seed/mountain7/600/800", label: "G" },
+  { url: "https://picsum.photos/seed/abstract8/600/800", label: "H" },
 ];
 
 const CARD_W = 2.1;
 const CARD_H = 2.8;
 const CARD_RADIUS = 0.15;
-const ARC_SPAN = Math.PI;
-// Keep card spacing equal to the current 8-card layout even if total changes.
+// Fixed spacing between cards — same as 8-image original layout
 const FIXED_ANGULAR_STEP = Math.PI / 7;
+// Arc span expands automatically with image count to prevent overlapping
+const ARC_SPAN = (IMAGES.length - 1) * FIXED_ANGULAR_STEP;
 const SIDE_TILT_FACTOR = 2;
 const MAX_SIDE_TILT = 1.1;
 const CENTER_TILT_MAX_X = 0.18;
@@ -58,7 +59,14 @@ function getConfig() {
 }
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
-function Card({ url, index, step, getDisplayAngle, getCenterTilt }) {
+function Card({
+  url,
+  index,
+  step,
+  getDisplayAngle,
+  getCenterTilt,
+  focusIndex,
+}) {
   const meshRef = useRef();
   const texture = useTexture(url);
   const baseAngle = index * step;
@@ -131,6 +139,7 @@ function Card({ url, index, step, getDisplayAngle, getCenterTilt }) {
     meshRef.current.rotation.x = centerTilt.x * centerWeight;
     meshRef.current.rotation.y = sideTilt + centerTilt.y * centerWeight;
     meshRef.current.scale.setScalar(scale);
+    meshRef.current.visible = Math.abs(index - focusIndex.current) <= 2;
   });
 
   return (
@@ -154,6 +163,7 @@ function Card({ url, index, step, getDisplayAngle, getCenterTilt }) {
 function Scene({ scrollAngle }) {
   const { camera } = useThree();
   const displayAngle = useRef(0);
+  const focusIndex = useRef(0);
   const mouseTarget = useRef({ x: 0, y: 0 });
   const mouseTilt = useRef({ x: 0, y: 0 });
   const keyLightRef = useRef();
@@ -183,6 +193,10 @@ function Scene({ scrollAngle }) {
     displayAngle.current +=
       (scrollAngle.current - displayAngle.current) *
       Math.min(delta * SNAP_SPEED, 1);
+    focusIndex.current = Math.max(
+      0,
+      Math.min(IMAGES.length - 1, Math.round(displayAngle.current / step)),
+    );
 
     // Mouse tilt easing
     const ease = Math.min(delta * CENTER_TILT_EASE, 1);
@@ -245,12 +259,13 @@ function Scene({ scrollAngle }) {
       <directionalLight position={[-7, 4, -6]} intensity={0.55} />
       {IMAGES.map((img, i) => (
         <Card
-          key={img.url}
+          key={`${img.url}-${i}`}
           url={img.url}
           index={i}
           step={step}
           getDisplayAngle={getDisplayAngle}
           getCenterTilt={getCenterTilt}
+          focusIndex={focusIndex}
         />
       ))}
       <ContactShadows
