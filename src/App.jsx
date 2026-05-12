@@ -9,19 +9,19 @@ const IMAGES = [
   { url: "https://picsum.photos/seed/arch1/600/800", label: "Architecture" },
   { url: "https://picsum.photos/seed/nature2/600/800", label: "Nature" },
   { url: "https://picsum.photos/seed/city3/600/800", label: "City" },
-  { url: "https://picsum.photos/seed/ocean4/600/800", label: "Ocean" },
-  { url: "https://picsum.photos/seed/forest5/600/800", label: "Forest" },
-  { url: "https://picsum.photos/seed/desert6/600/800", label: "Desert" },
-  { url: "https://picsum.photos/seed/mountain7/600/800", label: "Mountain" },
-  { url: "https://picsum.photos/seed/abstract8/600/800", label: "Abstract" },
-  { url: "https://picsum.photos/seed/arch1/600/800", label: "A" },
-  { url: "https://picsum.photos/seed/nature2/600/800", label: "B" },
-  { url: "https://picsum.photos/seed/city3/600/800", label: "C" },
-  { url: "https://picsum.photos/seed/ocean4/600/800", label: "D" },
-  { url: "https://picsum.photos/seed/forest5/600/800", label: "E" },
-  { url: "https://picsum.photos/seed/desert6/600/800", label: "F" },
-  { url: "https://picsum.photos/seed/mountain7/600/800", label: "G" },
-  { url: "https://picsum.photos/seed/abstract8/600/800", label: "H" },
+  // { url: "https://picsum.photos/seed/ocean4/600/800", label: "Ocean" },
+  // { url: "https://picsum.photos/seed/forest5/600/800", label: "Forest" },
+  // { url: "https://picsum.photos/seed/desert6/600/800", label: "Desert" },
+  // { url: "https://picsum.photos/seed/mountain7/600/800", label: "Mountain" },
+  // { url: "https://picsum.photos/seed/abstract8/600/800", label: "Abstract" },
+  // { url: "https://picsum.photos/seed/arch1/600/800", label: "A" },
+  // { url: "https://picsum.photos/seed/nature2/600/800", label: "B" },
+  // { url: "https://picsum.photos/seed/city3/600/800", label: "C" },
+  // { url: "https://picsum.photos/seed/ocean4/600/800", label: "D" },
+  // { url: "https://picsum.photos/seed/forest5/600/800", label: "E" },
+  // { url: "https://picsum.photos/seed/desert6/600/800", label: "F" },
+  // { url: "https://picsum.photos/seed/mountain7/600/800", label: "G" },
+  // { url: "https://picsum.photos/seed/abstract8/600/800", label: "H" },
 ];
 
 const CARD_W = 2.1;
@@ -29,14 +29,16 @@ const CARD_H = 2.8;
 const CARD_RADIUS = 0.15;
 // Fixed spacing between cards — same as 8-image original layout
 const FIXED_ANGULAR_STEP = Math.PI / 7;
-// Arc span expands automatically with image count to prevent overlapping
-const ARC_SPAN = (IMAGES.length - 1) * FIXED_ANGULAR_STEP;
+// Keep visual normalization stable when there are fewer than 5 images.
+const BASE_VISIBLE_COUNT = 5;
+const STABLE_ARC_SPAN =
+  Math.max(IMAGES.length - 1, BASE_VISIBLE_COUNT - 1) * FIXED_ANGULAR_STEP;
 const SIDE_TILT_FACTOR = 2;
 const MAX_SIDE_TILT = 1.1;
 const CENTER_TILT_MAX_X = 0.18;
 const CENTER_TILT_MAX_Y = 0.24;
 const CENTER_TILT_EASE = 6.5;
-const SCROLL_SENSITIVITY = 0.0003;
+const SCROLL_SENSITIVITY = 0.0002;
 
 const DRAG_PX_PER_ARC = () => window.innerWidth * 0.7;
 const TOUCH_DEADZONE_PX = 2;
@@ -126,7 +128,7 @@ function Card({
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
     const dist = Math.abs(angle);
-    const t = Math.min(dist / (ARC_SPAN * 0.7), 1);
+    const t = Math.min(dist / (STABLE_ARC_SPAN * 0.7), 1);
     const scale = Math.max(0.7, 1 - t * 0.3);
     const sideTilt = THREE.MathUtils.clamp(
       -angle * SIDE_TILT_FACTOR,
