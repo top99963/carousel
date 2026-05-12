@@ -9,28 +9,27 @@ const IMAGES = [
   { url: "https://picsum.photos/seed/arch1/600/800", label: "Architecture" },
   { url: "https://picsum.photos/seed/nature2/600/800", label: "Nature" },
   { url: "https://picsum.photos/seed/city3/600/800", label: "City" },
-  // { url: "https://picsum.photos/seed/ocean4/600/800", label: "Ocean" },
-  // { url: "https://picsum.photos/seed/forest5/600/800", label: "Forest" },
-  // { url: "https://picsum.photos/seed/desert6/600/800", label: "Desert" },
-  // { url: "https://picsum.photos/seed/mountain7/600/800", label: "Mountain" },
-  // { url: "https://picsum.photos/seed/abstract8/600/800", label: "Abstract" },
-  // { url: "https://picsum.photos/seed/arch1/600/800", label: "A" },
-  // { url: "https://picsum.photos/seed/nature2/600/800", label: "B" },
-  // { url: "https://picsum.photos/seed/city3/600/800", label: "C" },
-  // { url: "https://picsum.photos/seed/ocean4/600/800", label: "D" },
-  // { url: "https://picsum.photos/seed/forest5/600/800", label: "E" },
-  // { url: "https://picsum.photos/seed/desert6/600/800", label: "F" },
-  // { url: "https://picsum.photos/seed/mountain7/600/800", label: "G" },
-  // { url: "https://picsum.photos/seed/abstract8/600/800", label: "H" },
+  { url: "https://picsum.photos/seed/ocean4/600/800", label: "Ocean" },
+  { url: "https://picsum.photos/seed/forest5/600/800", label: "Forest" },
+  { url: "https://picsum.photos/seed/desert6/600/800", label: "Desert" },
+  { url: "https://picsum.photos/seed/mountain7/600/800", label: "Mountain" },
+  { url: "https://picsum.photos/seed/abstract8/600/800", label: "Abstract" },
+  { url: "https://picsum.photos/seed/arch1/600/800", label: "A" },
+  { url: "https://picsum.photos/seed/nature2/600/800", label: "B" },
+  { url: "https://picsum.photos/seed/city3/600/800", label: "C" },
+  { url: "https://picsum.photos/seed/ocean4/600/800", label: "D" },
+  { url: "https://picsum.photos/seed/forest5/600/800", label: "E" },
+  { url: "https://picsum.photos/seed/desert6/600/800", label: "F" },
+  { url: "https://picsum.photos/seed/mountain7/600/800", label: "G" },
+  { url: "https://picsum.photos/seed/abstract8/600/800", label: "H" },
 ];
 
 const CARD_W = 2.1;
 const CARD_H = 2.8;
 const CARD_RADIUS = 0.15;
-// Fixed spacing between cards — same as 8-image original layout
 const FIXED_ANGULAR_STEP = Math.PI / 7;
-// Keep visual normalization stable when there are fewer than 5 images.
 const BASE_VISIBLE_COUNT = 5;
+const VISIBLE_WINDOW_RADIUS = 2;
 const STABLE_ARC_SPAN =
   Math.max(IMAGES.length - 1, BASE_VISIBLE_COUNT - 1) * FIXED_ANGULAR_STEP;
 const SIDE_TILT_FACTOR = 2;
@@ -42,9 +41,9 @@ const SCROLL_SENSITIVITY = 0.0002;
 
 const DRAG_PX_PER_ARC = () => window.innerWidth * 0.7;
 const TOUCH_DEADZONE_PX = 2;
-const SNAP_SPEED = 4.0; // lerp speed for displayAngle (same as desktop)
-const INERTIA_DECAY = 0.92; // per-frame velocity decay after flick
-const SNAP_SPRING = 0.1; // fraction pulled toward nearest card per frame
+const SNAP_SPEED = 4.0;
+const INERTIA_DECAY = 0.92;
+const SNAP_SPRING = 0.1;
 const SNAP_THRESHOLD = 0.0012;
 const EMA_ALPHA = 0.35;
 
@@ -60,7 +59,6 @@ function getConfig() {
   };
 }
 
-// ─── Card ─────────────────────────────────────────────────────────────────────
 function Card({
   url,
   index,
@@ -141,7 +139,8 @@ function Card({
     meshRef.current.rotation.x = centerTilt.x * centerWeight;
     meshRef.current.rotation.y = sideTilt + centerTilt.y * centerWeight;
     meshRef.current.scale.setScalar(scale);
-    meshRef.current.visible = Math.abs(index - focusIndex.current) <= 2;
+    meshRef.current.visible =
+      Math.abs(index - focusIndex.current) <= VISIBLE_WINDOW_RADIUS;
   });
 
   return (
@@ -161,7 +160,6 @@ function Card({
   );
 }
 
-// ─── Scene ────────────────────────────────────────────────────────────────────
 function Scene({ scrollAngle }) {
   const { camera } = useThree();
   const displayAngle = useRef(0);
@@ -191,7 +189,6 @@ function Scene({ scrollAngle }) {
   }, [applyCamera]);
 
   useFrame((_, delta) => {
-    // Simple lerp — same as original desktop behavior
     displayAngle.current +=
       (scrollAngle.current - displayAngle.current) *
       Math.min(delta * SNAP_SPEED, 1);
@@ -200,7 +197,6 @@ function Scene({ scrollAngle }) {
       Math.min(IMAGES.length - 1, Math.round(displayAngle.current / step)),
     );
 
-    // Mouse tilt easing
     const ease = Math.min(delta * CENTER_TILT_EASE, 1);
     mouseTilt.current.x += (mouseTarget.current.x - mouseTilt.current.x) * ease;
     mouseTilt.current.y += (mouseTarget.current.y - mouseTilt.current.y) * ease;
@@ -283,30 +279,26 @@ function Scene({ scrollAngle }) {
   );
 }
 
-// ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const scrollAngle = useRef(0);
-  const inertiaVel = useRef(0); // arc-units/frame for post-flick coasting
+  const inertiaVel = useRef(0);
   const isTouching = useRef(false);
 
-  // Touch tracking
   const touchStartX = useRef(0);
   const touchStartAngle = useRef(0);
   const prevTouchX = useRef(0);
   const prevTouchTime = useRef(0);
-  const emaVelocity = useRef(0); // EMA of instantaneous drag velocity
+  const emaVelocity = useRef(0);
 
   const total = IMAGES.length;
   const step = FIXED_ANGULAR_STEP;
   const maxAngle = Math.max(total - 1, 0) * step;
 
-  // ── Desktop wheel ─────────────────────────────────────────────────────────
   const handleWheel = useCallback((e) => {
     e.preventDefault();
     inertiaVel.current += e.deltaY * SCROLL_SENSITIVITY;
   }, []);
 
-  // ── Touch start ───────────────────────────────────────────────────────────
   const handleTouchStart = useCallback((e) => {
     const x = e.touches[0].clientX;
     isTouching.current = true;
@@ -318,7 +310,6 @@ export default function App() {
     prevTouchTime.current = performance.now();
   }, []);
 
-  // ── Touch move: direct finger → scrollAngle (anchored from start point) ──
   const handleTouchMove = useCallback(
     (e) => {
       e.preventDefault();
@@ -328,7 +319,6 @@ export default function App() {
       const now = performance.now();
       const dt = now - prevTouchTime.current;
 
-      // Absolute mapping from finger start — no drift accumulation
       const totalDx = touchStartX.current - x;
       const totalDxAbs = Math.abs(totalDx);
       const adjustedDx =
@@ -342,7 +332,6 @@ export default function App() {
         maxAngle,
       );
 
-      // EMA velocity in arc-units/frame
       if (dt > 0) {
         const instV = ((prevTouchX.current - x) / DRAG_PX_PER_ARC() / dt) * 16;
         emaVelocity.current =
@@ -354,11 +343,8 @@ export default function App() {
     [maxAngle],
   );
 
-  // ── Touch end: hand off EMA velocity to inertia coasting ─────────────────
   const handleTouchEnd = useCallback(() => {
     isTouching.current = false;
-    // Transfer finger velocity to inertia — no artificial damping multiplier
-    // The INERTIA_DECAY per-frame handles the coast naturally
     inertiaVel.current = emaVelocity.current;
   }, []);
 
@@ -375,7 +361,6 @@ export default function App() {
     };
   }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
-  // ── Animation loop: inertia coast + snap (skips during active touch) ──────
   useEffect(() => {
     let raf;
     const tick = () => {
@@ -383,11 +368,9 @@ export default function App() {
         const absV = Math.abs(inertiaVel.current);
 
         if (absV > SNAP_THRESHOLD) {
-          // Coasting — exponential decay
           scrollAngle.current += inertiaVel.current;
           inertiaVel.current *= INERTIA_DECAY;
 
-          // Edge bounce
           if (scrollAngle.current < 0) {
             scrollAngle.current = 0;
             inertiaVel.current = 0;
@@ -396,7 +379,6 @@ export default function App() {
             inertiaVel.current = 0;
           }
         } else {
-          // Slow/stopped → spring toward nearest card
           inertiaVel.current = 0;
           const nearest = Math.round(scrollAngle.current / step) * step;
           scrollAngle.current += (nearest - scrollAngle.current) * SNAP_SPRING;
